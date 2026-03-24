@@ -219,10 +219,10 @@ class DB:
         self._conn.commit()
 
     def get_participants(self, channel_id: str) -> list[Participant]:
-        """Get all participants for a channel."""
+        """Get all participants for a channel, in insertion order."""
         rows = self._conn.execute(
             "SELECT channel_id, agent_id, role, system_prompt, model "
-            "FROM participants WHERE channel_id = ?",
+            "FROM participants WHERE channel_id = ? ORDER BY rowid",
             (channel_id,),
         ).fetchall()
         return [Participant(*row) for row in rows]
