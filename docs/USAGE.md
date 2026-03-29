@@ -93,6 +93,17 @@ Agents can produce documents (code, design docs, specs) during discussion:
 
 If you omit the filename, it uses the artifact's original name.
 
+Options:
+- `--name NAME` — select which artifact to export by name. If a channel has multiple artifacts and you don't specify `--name`, the first artifact is exported and a warning lists the alternatives.
+
+```bash
+# Export a specific artifact by name
+0x59 export <channel-id> --name design.md
+
+# See what artifacts are available first
+0x59 artifacts <channel-id>
+```
+
 ### Global options
 
 - `--db PATH` — use a different database file instead of the default location

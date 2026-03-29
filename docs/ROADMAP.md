@@ -39,6 +39,10 @@ This document tracks completed improvements and remaining work.
 - [x] Defer `watch` and `cost` commands to Phase 2 — updated `specs.md` to match
 - [x] Escape Pango markup in Linux `notify-send` — prevents unintended HTML rendering
 - [x] Document context windowing simplification — spec updated to match implementation
+- [x] Escape newlines in macOS notifications — AppleScript strings break on literal newlines
+- [x] Add `encoding="utf-8"` to artifact export — prevents corruption on non-UTF-8 locales
+- [x] Extract shared exceptions into `errors.py` — decouples coordinator from subprocess runner
+- [x] Add `--name` flag to `export` command — select artifact when multiple exist
 
 ---
 
