@@ -39,6 +39,17 @@ class TestNotify:
             script = mock_run.call_args[0][0][2]
             assert "back\\\\slash" in script
 
+    def test_pango_markup_escaped_on_linux(self) -> None:
+        """HTML-like tags must be escaped so notify-send doesn't render them."""
+        with (
+            patch("zx59.notify.platform.system", return_value="Linux"),
+            patch("zx59.notify.subprocess.run") as mock_run,
+        ):
+            notify("Title", "<b>bold</b> & 'quoted'")
+            args = mock_run.call_args[0][0]
+            assert args[1] == "Title"
+            assert args[2] == "&lt;b&gt;bold&lt;/b&gt; &amp; &#x27;quoted&#x27;"
+
     def test_failure_message_includes_exception(self, capsys: object) -> None:
         """Error details should be surfaced, not swallowed."""
         from io import StringIO

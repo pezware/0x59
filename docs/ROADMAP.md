@@ -26,6 +26,8 @@ This document tracks completed improvements and remaining work.
 - [x] Switch to OIDC Trusted Publisher — `uv publish --trusted-publishing always`, no stored API token
 - [x] Add pre-commit job to CI — enforces trailing-whitespace, YAML/TOML, merge conflict checks
 - [x] Add build verification to lint job — catches packaging issues before release
+- [x] Add dependency audit — `pip-audit` in CI lint job
+- [x] Upgrade to `actions/checkout@v6` and `actions/setup-python@v6`
 
 ### Code Fixes
 
@@ -35,20 +37,12 @@ This document tracks completed improvements and remaining work.
 - [x] Fix `FakeClaude` exhaustion — clear `AssertionError` instead of cryptic `StopIteration`
 - [x] Document `export --file` behavior — CLI help now states any path accepted
 - [x] Defer `watch` and `cost` commands to Phase 2 — updated `specs.md` to match
+- [x] Escape Pango markup in Linux `notify-send` — prevents unintended HTML rendering
+- [x] Document context windowing simplification — spec updated to match implementation
 
 ---
 
 ## Remaining
-
-### Code
-
-#### Linux `notify-send` passes unsanitized Pango markup
-
-`notify.py:27-30` — macOS path escapes backslashes and quotes; Linux path passes raw strings. `notify-send` interprets Pango markup tags (`<b>`, `<i>`, etc.) in the message body. Low severity — only cosmetic, no security impact.
-
-#### Context windowing drops messages without summarization
-
-The spec describes summarizing dropped messages via `claude -p --model haiku`. The implementation silently drops middle messages. This is a deliberate simplification that keeps the tool zero-cost for windowing, but diverges from the spec. Consider documenting the simplification or implementing summarization as a Phase 2 feature.
 
 ### Features (Phase 2)
 
@@ -57,13 +51,10 @@ Per `specs.md` section 13:
 - `0x59 watch <channel>` — live tail a conversation in real-time
 - `0x59 cost <channel>` — show estimated token usage
 - Observer role support (schema already in place)
+- Context windowing with summarization (currently drops middle messages silently)
 
 ### Infrastructure
 
 #### PyPI Trusted Publisher setup required
 
 The release workflow is configured for OIDC (`uv publish --trusted-publishing always`), but the PyPI project must be configured as a Trusted Publisher. Follow [PyPI's guide](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/) to link the `pezware/0x59` GitHub repository to the `zx59` PyPI project.
-
-#### Dependency audit
-
-No `pip-audit` step in CI yet. For a project that explicitly hardened supply-chain security, adding `uv run pip-audit` would close the remaining gap. Low urgency since the project has zero runtime dependencies.
