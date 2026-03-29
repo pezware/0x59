@@ -8,7 +8,7 @@ import platform
 import sys
 from pathlib import Path
 
-from zx59.coordinator import ClaudeRunner, Coordinator
+from zx59.coordinator import ClaudeRunner, Coordinator, TurnInfo
 from zx59.db import DB
 from zx59.export import export_artifact, validate_export_name
 from zx59.notify import notify
@@ -87,6 +87,13 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _print_turn(info: TurnInfo) -> None:
+    """Print a turn to stdout as it happens."""
+    header = f"── {info.agent_id} (turn {info.turn}/{info.max_turns}) "
+    print(f"\n{header}{'─' * max(1, 60 - len(header))}")
+    print(info.message, flush=True)
+
+
 def _cmd_chat(args: argparse.Namespace, db: DB) -> int:
     channel_id = db.create_channel(topic=args.topic, model=args.model, max_turns=args.max_turns)
     db.add_participant(
@@ -98,8 +105,9 @@ def _cmd_chat(args: argparse.Namespace, db: DB) -> int:
 
     runner = _create_runner()
     coord = Coordinator(db, runner)
-    result = coord.run(channel_id)
+    result = coord.run(channel_id, on_turn=_print_turn)
 
+    print(f"\n{'═' * 60}")
     print(f"Channel: {result.channel_id}")
     print(f"Status: {result.status}")
     print(f"Turns: {result.total_turns}")
@@ -127,8 +135,9 @@ def _cmd_discuss(args: argparse.Namespace, db: DB) -> int:
 
     runner = _create_runner()
     coord = Coordinator(db, runner)
-    result = coord.run(channel_id)
+    result = coord.run(channel_id, on_turn=_print_turn)
 
+    print(f"\n{'═' * 60}")
     print(f"Channel: {result.channel_id}")
     print(f"Status: {result.status}")
     print(f"Turns: {result.total_turns}")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -16,7 +17,20 @@ from zx59.schema import schema_json
 class ClaudeRunner(Protocol):
     """Interface for calling Claude. Injected into Coordinator for testability."""
 
-    def run(self, prompt: str, model: str, json_schema: str) -> str: ...
+    def run(
+        self, prompt: str, model: str, json_schema: str, *, session_name: str | None = None
+    ) -> str: ...
+
+
+@dataclass(frozen=True)
+class TurnInfo:
+    """Info emitted after each turn for live display."""
+
+    turn: int
+    max_turns: int
+    agent_id: str
+    message: str
+    decision_reached: bool
 
 
 @dataclass(frozen=True)
@@ -36,7 +50,13 @@ class Coordinator:
         self._db = db
         self._runner = runner
 
-    def run(self, channel_id: str, max_turns: int | None = None) -> ConversationResult:
+    def run(
+        self,
+        channel_id: str,
+        max_turns: int | None = None,
+        *,
+        on_turn: Callable[[TurnInfo], None] | None = None,
+    ) -> ConversationResult:
         """Run a conversation to completion or max turns."""
         channel = self._db.get_channel(channel_id)
         if channel is None:
@@ -68,7 +88,8 @@ class Coordinator:
                 agenda=channel.agenda,
             )
 
-            raw = self._runner.run(prompt, model, json_schema)
+            session_name = f"0x59 | {agent.agent_id} | {channel.topic[:50]}"
+            raw = self._runner.run(prompt, model, json_schema, session_name=session_name)
 
             try:
                 response = json.loads(raw)
@@ -84,6 +105,9 @@ class Coordinator:
             msg_id = self._db.append_message(
                 channel_id, agent.agent_id, content, msg_type, token_est
             )
+
+            if on_turn:
+                on_turn(TurnInfo(turn, max_turns, agent.agent_id, content, decision_reached))
 
             # Save any artifacts
             for artifact in response.get("artifacts", []):

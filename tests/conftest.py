@@ -27,7 +27,9 @@ class FakeClaude:
         self._index = 0
         self.calls: list[tuple[str, str, str]] = []
 
-    def run(self, prompt: str, model: str, json_schema: str) -> str:
+    def run(
+        self, prompt: str, model: str, json_schema: str, *, session_name: str | None = None
+    ) -> str:
         self.calls.append((prompt, model, json_schema))
         if self._index >= len(self._responses):
             raise AssertionError(
