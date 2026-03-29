@@ -124,14 +124,23 @@ class DB:
         return self._conn.execute(sql, params)
 
     def migrate(self) -> None:
-        """Run pending schema migrations."""
+        """Run pending schema migrations.
+
+        user_version tracks the next migration to apply (0 = fresh DB).
+        Only migrations with version >= user_version are executed.
+        After running, user_version is set to max(applied) + 1.
+        """
         (current_version,) = self._conn.execute("PRAGMA user_version").fetchone()
+        applied = False
         for version in sorted(_MIGRATIONS):
-            if version >= current_version:
-                self._conn.executescript(_MIGRATIONS[version])
-        target = max(_MIGRATIONS) + 1
-        self._conn.execute(f"PRAGMA user_version={target}")
-        self._conn.commit()
+            if version < current_version:
+                continue
+            self._conn.executescript(_MIGRATIONS[version])
+            applied = True
+        if applied:
+            target = max(_MIGRATIONS) + 1
+            self._conn.execute(f"PRAGMA user_version={target}")
+            self._conn.commit()
 
     def close(self) -> None:
         """Close the database connection."""

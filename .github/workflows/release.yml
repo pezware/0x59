@@ -11,10 +11,15 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v5
+      - name: Test before publish
+        run: |
+          uv sync
+          uv run pytest
       - name: Build
         run: uv build
+      - name: Smoke test
+        run: uv run python -c "import zx59; print(zx59.__version__)"
       - name: Publish to PyPI
         run: uv publish
         env:

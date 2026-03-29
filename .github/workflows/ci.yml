@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v5
       - run: uv sync
       - run: uv run ruff check src tests
       - run: uv run ruff format --check src tests
@@ -24,19 +23,16 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - run: uv sync
-      - run: uv run pytest --cov=zx59 --cov-report=xml
+      - run: uv sync --python ${{ matrix.python-version }}
+      - run: uv run pytest --cov=zx59 --cov-report=xml --cov-report=term --cov-fail-under=80
 
   test-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - uses: astral-sh/setup-uv@v5
       - run: uv sync
       - run: uv run pytest
