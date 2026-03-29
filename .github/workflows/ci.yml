@@ -21,6 +21,8 @@ jobs:
       - run: uv run mypy src
       - name: Verify package builds
         run: uv build
+      - name: Audit dependencies
+        run: uv run --with pip-audit pip-audit
 
   pre-commit:
     runs-on: ubuntu-latest

@@ -226,17 +226,17 @@ Agent B: decision_reached=false → pending_decision reset. Continue.
 
 ### Context Windowing
 
-To keep token usage bounded in longer conversations:
+To keep token usage bounded in longer conversations, middle messages are dropped:
 
 | Conversation Length | Strategy |
 |---|---|
 | 1-10 turns | Full history |
-| 11-20 turns | Topic + summary of turns 1..N-5 + full last 5 turns |
-| 21+ turns | Topic + rolling summary + last 3 turns |
+| 11-20 turns | First message + last 5 turns |
+| 21+ turns | First message + last 3 turns |
 
 Token estimation: `len(text) // 4` (naive but sufficient — this is for windowing, not billing).
 
-Summarization is a `claude -p --model haiku` call, stored as `msg_type='summary'`.
+Dropped messages are silently omitted (no summarization). A future enhancement could summarize dropped turns via a `claude -p --model haiku` call, stored as `msg_type='summary'`. This would improve agent context at the cost of an extra API call per windowed turn.
 
 ## 6. CLI Interface
 
