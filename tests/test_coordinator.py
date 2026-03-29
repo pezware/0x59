@@ -5,8 +5,9 @@ from __future__ import annotations
 import pytest
 
 from tests.conftest import FakeClaude, make_response, setup_channel
-from zx59.coordinator import ClaudeResponseError, Coordinator
+from zx59.coordinator import Coordinator
 from zx59.db import DB
+from zx59.runner import ClaudeResponseError
 
 
 class TestCoordinatorDecision:
