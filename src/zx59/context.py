@@ -10,7 +10,7 @@ def estimate_tokens(text: str) -> int:
     return len(text) // 4
 
 
-def window_messages(messages: list[Message], max_tokens: int = 100_000) -> list[Message]:
+def window_messages(messages: list[Message]) -> list[Message]:
     """Apply windowing strategy based on conversation length.
 
     - ≤10 messages: return all
