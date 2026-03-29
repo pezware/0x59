@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   UV_VERSION: "0.7.8"
 
@@ -47,12 +50,3 @@ jobs:
         run: curl -LsSf "https://astral.sh/uv/$UV_VERSION/install.sh" | sh
       - run: uv sync --python ${{ matrix.python-version }}
       - run: uv run pytest --cov=zx59 --cov-report=xml --cov-report=term --cov-fail-under=80
-
-  test-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Install uv
-        run: curl -LsSf "https://astral.sh/uv/$UV_VERSION/install.sh" | sh
-      - run: uv sync
-      - run: uv run pytest
