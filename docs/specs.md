@@ -247,13 +247,11 @@ Entry point: `0x59` (via `[project.scripts]` in pyproject.toml).
 ```
 0x59 chat <topic>                      Start a quick 2-agent chat
 0x59 discuss <topic> [options]         Start a formal discussion with roles
-0x59 watch <channel-id>                Tail a conversation in real-time
 0x59 log <channel-id>                  Print full transcript
 0x59 decision <channel-id>             Print the decision summary
 0x59 artifacts <channel-id>            List artifacts from a channel
 0x59 export <channel-id> [file]        Export artifact(s) to file
 0x59 ls [--open|--decided|--closed]    List channels
-0x59 cost <channel-id>                 Show estimated token usage
 ```
 
 ### Options for `discuss`
@@ -282,9 +280,6 @@ Entry point: `0x59` (via `[project.scripts]` in pyproject.toml).
 3. Refresh token strategy" \
   --model sonnet \
   --max-turns 15
-
-# Watch a running discussion
-0x59 watch auth-middleware-a3f
 
 # After decision, export the produced document
 0x59 export auth-middleware-a3f ./decisions/auth-design.md
@@ -648,16 +643,17 @@ Release process:
 
 ### Phase 1 — Core (v0.1.0)
 
-- 2-agent turn-based discussion
+- 2-agent and multi-agent turn-based discussion
 - SQLite storage with full schema
-- CLI: `chat`, `discuss`, `watch`, `log`, `decision`, `export`, `ls`
-- Decision detection (mutual agreement)
-- macOS notification on decision
+- CLI: `chat`, `discuss`, `log`, `decision`, `artifacts`, `export`, `ls`
+- Decision detection (mutual agreement between different agents)
+- macOS/Linux notification on decision
 - Context windowing for long conversations
 
-### Phase 2 — Observer (v0.2.0)
+### Phase 2 — Observer & Utilities (v0.2.0)
 
-- `0x59 observe <channel>` — read-only live tail
+- `0x59 watch <channel>` — live tail a conversation in real-time
+- `0x59 cost <channel>` — show estimated token usage
 - Observer role in participants table (already in schema)
 - SQLite WAL allows concurrent readers without blocking
 

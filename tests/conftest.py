@@ -23,12 +23,19 @@ class FakeClaude:
     """Test double for ClaudeRunner. Returns pre-configured responses."""
 
     def __init__(self, responses: list[str]) -> None:
-        self._responses = iter(responses)
+        self._responses = list(responses)
+        self._index = 0
         self.calls: list[tuple[str, str, str]] = []
 
     def run(self, prompt: str, model: str, json_schema: str) -> str:
         self.calls.append((prompt, model, json_schema))
-        return next(self._responses)
+        if self._index >= len(self._responses):
+            raise AssertionError(
+                f"FakeClaude: no more responses (exhausted after {len(self._responses)} calls)"
+            )
+        response = self._responses[self._index]
+        self._index += 1
+        return response
 
 
 def make_response(

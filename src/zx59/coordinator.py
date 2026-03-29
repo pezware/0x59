@@ -50,7 +50,7 @@ class Coordinator:
         if len(agents) < 2:
             raise ValueError(f"Channel {channel_id} needs at least 2 participants")
 
-        pending_decision = False
+        pending_decision_by: str | None = None
         turn = 0
         json_schema = schema_json()
 
@@ -95,14 +95,14 @@ class Coordinator:
                     content_type=artifact.get("content_type", "text/markdown"),
                 )
 
-            # Decision detection: both agents must agree consecutively
+            # Decision detection: two different agents must agree consecutively
             if decision_reached:
-                if pending_decision:
+                if pending_decision_by is not None and pending_decision_by != agent.agent_id:
                     decision_summary = response.get("decision_summary", content)
                     self._db.decide_channel(channel_id, decision_summary)
                     return ConversationResult(channel_id, "decided", turn, decision_summary)
-                pending_decision = True
+                pending_decision_by = agent.agent_id
             else:
-                pending_decision = False
+                pending_decision_by = None
 
         return ConversationResult(channel_id, "max_turns", turn, None)

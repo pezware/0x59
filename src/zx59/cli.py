@@ -75,7 +75,7 @@ def _build_parser() -> argparse.ArgumentParser:
     # export
     exp_p = sub.add_parser("export", help="Export artifact to file")
     exp_p.add_argument("channel_id", help="Channel ID")
-    exp_p.add_argument("file", nargs="?", default=None, help="Output file path")
+    exp_p.add_argument("file", nargs="?", default=None, help="Output file path (any path accepted)")
 
     # ls
     ls_p = sub.add_parser("ls", help="List channels")

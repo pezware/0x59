@@ -1,0 +1,69 @@
+# Roadmap
+
+Current version: **0.1.0** (alpha)
+
+This document tracks completed improvements and remaining work.
+
+---
+
+## Completed
+
+### Python/uv Best Practices
+
+- [x] Add `py.typed` marker (PEP 561) — downstream type checkers now recognize inline annotations
+- [x] Add `.python-version` file — pins dev interpreter to 3.12 for uv consistency
+- [x] Fix `exclude-newer` to absolute ISO 8601 date — no more wall-clock drift
+- [x] Expand ruff rules — added `RUF`, `PTH`, `C4` to match strict project posture
+- [x] Add mypy to pre-commit hooks — type regressions caught locally, not just in CI
+- [x] Set restrictive DB directory permissions — `mode=0o700` per spec section 15
+
+### CI Hardening
+
+- [x] Pin uv version in CI — `UV_VERSION` env var for reproducible installs (no third-party Actions)
+- [x] Fix coverage enforcement — `--cov-fail-under=80` actually enforced now
+- [x] Add quality gate before PyPI publish — test + build + smoke test before publish
+- [x] Pass matrix Python version to `uv sync` — test matrix actually tests the right interpreter
+- [x] Switch to OIDC Trusted Publisher — `uv publish --trusted-publishing always`, no stored API token
+- [x] Add pre-commit job to CI — enforces trailing-whitespace, YAML/TOML, merge conflict checks
+- [x] Add build verification to lint job — catches packaging issues before release
+
+### Code Fixes
+
+- [x] Harden migration guard — skip unnecessary `user_version` writes, clarify semantics with docstring
+- [x] Fix decision detection for 3+ agents — track proposing agent ID, confirming agent must differ
+- [x] Remove dead `max_tokens` parameter from `window_messages` — honest API
+- [x] Fix `FakeClaude` exhaustion — clear `AssertionError` instead of cryptic `StopIteration`
+- [x] Document `export --file` behavior — CLI help now states any path accepted
+- [x] Defer `watch` and `cost` commands to Phase 2 — updated `specs.md` to match
+
+---
+
+## Remaining
+
+### Code
+
+#### Linux `notify-send` passes unsanitized Pango markup
+
+`notify.py:27-30` — macOS path escapes backslashes and quotes; Linux path passes raw strings. `notify-send` interprets Pango markup tags (`<b>`, `<i>`, etc.) in the message body. Low severity — only cosmetic, no security impact.
+
+#### Context windowing drops messages without summarization
+
+The spec describes summarizing dropped messages via `claude -p --model haiku`. The implementation silently drops middle messages. This is a deliberate simplification that keeps the tool zero-cost for windowing, but diverges from the spec. Consider documenting the simplification or implementing summarization as a Phase 2 feature.
+
+### Features (Phase 2)
+
+Per `specs.md` section 13:
+
+- `0x59 watch <channel>` — live tail a conversation in real-time
+- `0x59 cost <channel>` — show estimated token usage
+- Observer role support (schema already in place)
+
+### Infrastructure
+
+#### PyPI Trusted Publisher setup required
+
+The release workflow is configured for OIDC (`uv publish --trusted-publishing always`), but the PyPI project must be configured as a Trusted Publisher. Follow [PyPI's guide](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/) to link the `pezware/0x59` GitHub repository to the `zx59` PyPI project.
+
+#### Dependency audit
+
+No `pip-audit` step in CI yet. For a project that explicitly hardened supply-chain security, adding `uv run pip-audit` would close the remaining gap. Low urgency since the project has zero runtime dependencies.

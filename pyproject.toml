@@ -44,14 +44,14 @@ dev = [
 ]
 
 [tool.uv]
-exclude-newer = "7 days"
+exclude-newer = "2026-03-29T00:00:00Z"
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "PTH", "C4"]
 
 [tool.ruff.format]
 quote-style = "double"

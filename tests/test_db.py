@@ -38,6 +38,18 @@ class TestDBSetup:
         assert "messages" in table_names
         assert "artifacts" in table_names
 
+    def test_user_version_tracks_applied_migrations(self, db: DB) -> None:
+        """user_version should equal max(migration_index) + 1 after init."""
+        (version,) = db.execute("PRAGMA user_version").fetchone()
+        assert version == 1  # migration 0 applied → user_version = 1
+
+    def test_migrate_skips_when_up_to_date(self, db: DB) -> None:
+        """Re-running migrate on an up-to-date DB should not change user_version."""
+        (before,) = db.execute("PRAGMA user_version").fetchone()
+        db.migrate()
+        (after,) = db.execute("PRAGMA user_version").fetchone()
+        assert before == after
+
 
 class TestChannels:
     """Channel CRUD operations."""

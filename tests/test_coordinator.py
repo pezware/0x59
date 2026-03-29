@@ -61,6 +61,58 @@ class TestCoordinatorDecision:
         assert result.status == "decided"
         assert result.total_turns == 5
 
+    def test_three_agent_decision_requires_different_agents(self, db: DB) -> None:
+        """Same agent proposing twice in a row should not trigger a decision."""
+        channel_id = db.create_channel(topic="Test", model="sonnet", max_turns=6)
+        db.add_participant(channel_id, "a", "participant", system_prompt="Agent A")
+        db.add_participant(channel_id, "b", "participant", system_prompt="Agent B")
+        db.add_participant(channel_id, "c", "participant", system_prompt="Agent C")
+
+        fake = FakeClaude(
+            [
+                # Turn 1 (a): proposes decision
+                make_response("Let's agree", decision=True, summary="Plan X"),
+                # Turn 2 (b): disagrees
+                make_response("No way", decision=False),
+                # Turn 3 (c): proposes decision
+                make_response("I agree with A", decision=True, summary="Plan X"),
+                # Turn 4 (a): agrees — different agent from c, so decision fires
+                make_response("Confirmed", decision=True, summary="Plan X"),
+            ]
+        )
+        coord = Coordinator(db, fake)
+        result = coord.run(channel_id)
+
+        assert result.status == "decided"
+        assert result.total_turns == 4
+
+    def test_same_agent_cannot_self_confirm_decision(self, db: DB) -> None:
+        """In a 3-agent setup, an agent cannot confirm its own proposal."""
+        channel_id = db.create_channel(topic="Test", model="sonnet", max_turns=6)
+        db.add_participant(channel_id, "a", "participant", system_prompt="Agent A")
+        db.add_participant(channel_id, "b", "participant", system_prompt="Agent B")
+        db.add_participant(channel_id, "c", "participant", system_prompt="Agent C")
+
+        fake = FakeClaude(
+            [
+                # Turn 1 (a): proposes decision
+                make_response("Let's do X", decision=True, summary="X"),
+                # Turn 2 (b): disagrees
+                make_response("Nope", decision=False),
+                # Turn 3 (c): disagrees
+                make_response("Nope", decision=False),
+                # Turn 4 (a): proposes again — same agent, should NOT self-confirm
+                make_response("Let's do X again", decision=True, summary="X"),
+                # Turn 5 (b): agrees — different agent, decision fires
+                make_response("Ok fine", decision=True, summary="X"),
+            ]
+        )
+        coord = Coordinator(db, fake)
+        result = coord.run(channel_id)
+
+        assert result.status == "decided"
+        assert result.total_turns == 5
+
 
 class TestCoordinatorTurns:
     def test_max_turns_stops_conversation(self, db: DB) -> None:
