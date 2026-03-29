@@ -10,8 +10,8 @@ import sys
 def notify(title: str, message: str) -> None:
     """Send a desktop notification. Never raises."""
     try:
-        safe_message = message.replace('"', '\\"')
-        safe_title = title.replace('"', '\\"')
+        safe_message = message.replace("\\", "\\\\").replace('"', '\\"')
+        safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
 
         if platform.system() == "Darwin":
             subprocess.run(
@@ -30,5 +30,5 @@ def notify(title: str, message: str) -> None:
                 capture_output=True,
                 timeout=5,
             )
-    except Exception:
-        print(f"[0x59] notification failed: {title}: {message}", file=sys.stderr)
+    except Exception as e:
+        print(f"[0x59] notification failed ({e}): {title}: {message}", file=sys.stderr)

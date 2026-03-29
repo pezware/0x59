@@ -96,6 +96,16 @@ class TestCLIReadCommands:
         result = main(["--db", str(db_path), "artifacts", cid])
         assert result == 0
 
+    def test_export_rejects_traversal_in_artifact_name(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "test.db"
+        db = DB(db_path)
+        cid = db.create_channel(topic="Test", model="sonnet")
+        db.save_artifact(cid, "../../etc/passwd", "malicious content")
+        db.close()
+
+        result = main(["--db", str(db_path), "export", cid])
+        assert result == 1
+
 
 class TestCLIChatCommand:
     """Chat command with FakeClaude."""

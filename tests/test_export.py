@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from zx59.db import Artifact
-from zx59.export import export_artifact
+from zx59.export import export_artifact, validate_export_name
 
 
 def _artifact(name: str = "doc.md", content: str = "# Hello") -> Artifact:
@@ -36,3 +38,23 @@ class TestExportArtifact:
 
         assert path.exists()
         assert path.read_text() == "# Hello"
+
+
+class TestValidateExportName:
+    def test_rejects_absolute_path(self) -> None:
+        with pytest.raises(ValueError, match="absolute"):
+            validate_export_name("/etc/passwd")
+
+    def test_rejects_dotdot_traversal(self) -> None:
+        with pytest.raises(ValueError, match="\\.\\."):
+            validate_export_name("../../.ssh/keys")
+
+    def test_rejects_embedded_dotdot(self) -> None:
+        with pytest.raises(ValueError, match="\\.\\."):
+            validate_export_name("foo/../../bar")
+
+    def test_allows_simple_name(self) -> None:
+        assert validate_export_name("design.md") == Path("design.md")
+
+    def test_allows_subdirectory(self) -> None:
+        assert validate_export_name("docs/out.md") == Path("docs/out.md")

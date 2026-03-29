@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-import shutil
-import subprocess
 from dataclasses import dataclass
 from typing import Protocol
 
 from zx59.context import estimate_tokens, window_messages
 from zx59.db import DB
 from zx59.prompt import build_prompt
+from zx59.runner import ClaudeResponseError
 from zx59.schema import schema_json
 
 
@@ -28,52 +27,6 @@ class ConversationResult:
     status: str  # "decided" | "max_turns" | "error"
     total_turns: int
     decision: str | None
-
-
-class ClaudeError(Exception):
-    """Raised when the claude CLI returns a non-zero exit code."""
-
-    def __init__(self, returncode: int, stderr: str) -> None:
-        self.returncode = returncode
-        self.stderr = stderr
-        super().__init__(f"claude exited with code {returncode}: {stderr}")
-
-
-class ClaudeResponseError(Exception):
-    """Raised when claude output is not valid JSON."""
-
-    def __init__(self, raw_output: str) -> None:
-        self.raw_output = raw_output
-        super().__init__(f"Invalid JSON response: {raw_output[:200]}")
-
-
-class SubprocessClaudeRunner:
-    """Real ClaudeRunner that calls claude -p via subprocess."""
-
-    def __init__(self) -> None:
-        if shutil.which("claude") is None:
-            raise ClaudeError(-1, "Claude Code CLI not found in PATH")
-
-    def run(self, prompt: str, model: str, json_schema: str) -> str:
-        result = subprocess.run(
-            [
-                "claude",
-                "-p",
-                "--model",
-                model,
-                "--output-format",
-                "json",
-                "--json-schema",
-                json_schema,
-            ],
-            input=prompt,
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
-        if result.returncode != 0:
-            raise ClaudeError(result.returncode, result.stderr)
-        return result.stdout
 
 
 class Coordinator:
@@ -122,10 +75,7 @@ class Coordinator:
             except json.JSONDecodeError as err:
                 raise ClaudeResponseError(raw) from err
 
-            # Extract message from Claude's JSON envelope if present
-            content: str = response.get("result", response.get("message", ""))
-            if "message" in response and "result" not in response:
-                content = response["message"]
+            content: str = response.get("message", "")
 
             token_est = estimate_tokens(content)
             decision_reached = bool(response.get("decision_reached", False))

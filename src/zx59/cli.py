@@ -8,10 +8,11 @@ import platform
 import sys
 from pathlib import Path
 
-from zx59.coordinator import ClaudeRunner, Coordinator, SubprocessClaudeRunner
+from zx59.coordinator import ClaudeRunner, Coordinator
 from zx59.db import DB
-from zx59.export import export_artifact
+from zx59.export import export_artifact, validate_export_name
 from zx59.notify import notify
+from zx59.runner import SubprocessClaudeRunner
 
 _DEFAULT_PROPOSER_PROMPT = (
     "You are a thoughtful technical contributor. Propose solutions, "
@@ -188,7 +189,14 @@ def _cmd_export(args: argparse.Namespace, db: DB) -> int:
         return 1
 
     art = artifacts[0]
-    path = Path(args.file) if args.file else Path(art.name)
+    if args.file:
+        path = Path(args.file)
+    else:
+        try:
+            path = validate_export_name(art.name)
+        except ValueError as e:
+            print(f"Unsafe artifact name: {e}", file=sys.stderr)
+            return 1
     export_artifact(art, path)
     print(f"Exported: {path}")
     return 0
