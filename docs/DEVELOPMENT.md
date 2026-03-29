@@ -22,6 +22,7 @@ src/zx59/
   coordinator.py   turn engine — runs the agent conversation loop
   db.py            all SQLite operations (queries, migrations, WAL setup)
   runner.py        subprocess wrapper for calling `claude -p`
+  errors.py        shared exceptions (ClaudeError, ClaudeResponseError)
   context.py       message windowing for long conversations
   prompt.py        assembles the prompt sent to each agent per turn
   schema.py        JSON schema for structured agent responses
@@ -48,6 +49,7 @@ Coordinator         turn engine — the core loop
   |     +-- FakeClaude             (tests: returns canned responses)
   |
   +-- DB            all database access
+  +-- errors        shared exceptions (ClaudeError, ClaudeResponseError)
   |
   +-- build_prompt  assembles prompt per turn
   +-- window_messages  trims history for token budget

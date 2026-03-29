@@ -63,9 +63,10 @@ Two or more Claude Code instances running on the same machine have no built-in w
 | Context | `src/zx59/context.py` | Message windowing for long conversations | ~40 lines |
 | Prompt | `src/zx59/prompt.py` | Prompt assembly from messages + system prompt | ~30 lines |
 | Schema | `src/zx59/schema.py` | JSON schema definitions for structured output | ~20 lines |
+| Errors | `src/zx59/errors.py` | Shared exceptions (`ClaudeError`, `ClaudeResponseError`) | ~20 lines |
 | Notify | `src/zx59/notify.py` | macOS/Linux desktop notifications | ~20 lines |
 | Export | `src/zx59/export.py` | Artifact extraction to files | ~20 lines |
-| **Total** | | | **~390 lines** |
+| **Total** | | | **~410 lines** |
 
 ### Package Naming
 
@@ -250,7 +251,7 @@ Entry point: `0x59` (via `[project.scripts]` in pyproject.toml).
 0x59 log <channel-id>                  Print full transcript
 0x59 decision <channel-id>             Print the decision summary
 0x59 artifacts <channel-id>            List artifacts from a channel
-0x59 export <channel-id> [file]        Export artifact(s) to file
+0x59 export <channel-id> [file] [--name NAME]  Export artifact to file
 0x59 ls [--open|--decided|--closed]    List channels
 ```
 
@@ -313,14 +314,18 @@ notify-send "0x59 — Decision" "Auth middleware: Use JWT with refresh tokens"
 
 Notification failure is non-fatal — wrapped in try/except, logged to stderr.
 
+Notification text is sanitized before sending:
+- **macOS**: Backslashes and double quotes are escaped. Newlines are replaced with spaces (AppleScript string literals don't support `\n` escape sequences — a literal newline breaks the string). Carriage returns are stripped.
+- **Linux**: HTML/Pango markup is escaped via `html.escape()` to prevent `notify-send` from rendering unintended formatting.
+
 ## 8. Error Handling
 
 ### Claude CLI Errors
 
 | Scenario | Handling |
 |---|---|
-| `claude -p` returns non-zero exit | Raise `ClaudeError(returncode, stderr)`. Coordinator logs and aborts. |
-| Response is not valid JSON | Raise `ClaudeResponseError(raw_output)`. Log raw output for debugging. |
+| `claude -p` returns non-zero exit | Raise `ClaudeError(returncode, stderr)` (from `errors.py`). Coordinator logs and aborts. |
+| Response is not valid JSON | Raise `ClaudeResponseError(raw_output)` (from `errors.py`). Log raw output for debugging. |
 | `claude -p` hangs | `subprocess.run(timeout=300)`. On timeout, kill and raise. |
 | `claude` not found in PATH | Fail fast at startup with clear message: "Claude Code CLI required." |
 
@@ -348,6 +353,7 @@ Fail fast with context. Never silently swallow. The coordinator surfaces all err
 │       ├── cli.py              # argparse entry point
 │       ├── coordinator.py      # turn engine + ClaudeRunner protocol
 │       ├── db.py               # SQLite operations + migrations
+│       ├── errors.py           # shared exceptions (ClaudeError, ClaudeResponseError)
 │       ├── context.py          # message windowing
 │       ├── prompt.py           # prompt assembly
 │       ├── schema.py           # JSON schema definitions

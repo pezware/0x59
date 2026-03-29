@@ -31,6 +31,13 @@ class TestExportArtifact:
         assert result == path
         assert path.read_text() == "# Design\n\nUse JWT."
 
+    def test_writes_utf8_content(self, tmp_path: Path) -> None:
+        art = _artifact(content="日本語テスト — emoji: 🎵")
+        path = tmp_path / "unicode.md"
+        export_artifact(art, path)
+
+        assert path.read_text(encoding="utf-8") == "日本語テスト — emoji: 🎵"
+
     def test_creates_parent_directories(self, tmp_path: Path) -> None:
         art = _artifact()
         path = tmp_path / "sub" / "dir" / "doc.md"

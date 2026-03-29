@@ -23,5 +23,5 @@ def validate_export_name(name: str) -> Path:
 def export_artifact(artifact: Artifact, path: Path) -> Path:
     """Write artifact content to a file. Returns the path written."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(artifact.content)
+    path.write_text(artifact.content, encoding="utf-8")
     return path
