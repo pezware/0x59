@@ -50,3 +50,17 @@ Write the failing test before the implementation. Use `FakeClaude` for coordinat
 - `hatchling` build backend, `uv` package manager
 - Commit messages explain "why", not "what"
 - No TODOs without issue numbers
+
+## Gotchas
+
+### AppleScript String Escaping (notify.py)
+
+`osascript -e 'display notification "..."'` does not support `\n` escape sequences. A literal newline inside the string is a syntax error that silently fails (caught by the `try/except`). Always sanitize: replace `\n` with space, strip `\r`, escape `\` and `"`. This affects every real invocation since LLM output is almost always multi-line.
+
+### Python `write_text` Encoding
+
+`Path.write_text(content)` uses `locale.getpreferredencoding()`, not UTF-8. Since SQLite stores TEXT as UTF-8, always pass `encoding="utf-8"` explicitly to avoid corruption on non-UTF-8 locales.
+
+### Shared Exceptions Live in `errors.py`
+
+`ClaudeError` and `ClaudeResponseError` are in `errors.py`, not `runner.py`. This keeps `coordinator.py` decoupled from the subprocess module. `runner.py` re-exports both for backwards compatibility.
