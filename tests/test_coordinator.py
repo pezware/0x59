@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from tests.conftest import FakeClaude, make_response, setup_channel
-from zx59.coordinator import Coordinator
+from zx59.coordinator import Coordinator, TurnInfo
 from zx59.db import DB
 from zx59.runner import ClaudeResponseError
 
@@ -216,6 +216,81 @@ class TestCoordinatorPersistence:
         assert channel is not None
         assert channel.status == "decided"
         assert channel.decision == "Agreed"
+
+
+class TestCoordinatorOnTurn:
+    def test_on_turn_called_for_each_turn(self, db: DB) -> None:
+        channel_id = setup_channel(db, max_turns=3)
+        fake = FakeClaude(
+            [
+                make_response("First"),
+                make_response("Second"),
+                make_response("Third"),
+            ]
+        )
+        turns: list[TurnInfo] = []
+        coord = Coordinator(db, fake)
+        coord.run(channel_id, on_turn=turns.append)
+
+        assert len(turns) == 3
+        assert turns[0].turn == 1
+        assert turns[0].max_turns == 3
+        assert turns[0].agent_id == "proposer"
+        assert turns[0].message == "First"
+        assert turns[1].agent_id == "challenger"
+        assert turns[2].agent_id == "proposer"
+
+    def test_on_turn_reflects_decision_state(self, db: DB) -> None:
+        channel_id = setup_channel(db)
+        fake = FakeClaude(
+            [
+                make_response("Propose", decision=True, summary="X"),
+                make_response("Agree", decision=True, summary="X"),
+            ]
+        )
+        turns: list[TurnInfo] = []
+        coord = Coordinator(db, fake)
+        coord.run(channel_id, on_turn=turns.append)
+
+        assert turns[0].decision_reached is True
+        assert turns[1].decision_reached is True
+
+    def test_no_on_turn_callback_is_fine(self, db: DB) -> None:
+        channel_id = setup_channel(db, max_turns=2)
+        fake = FakeClaude(
+            [
+                make_response("A"),
+                make_response("B"),
+            ]
+        )
+        coord = Coordinator(db, fake)
+        result = coord.run(channel_id)  # no on_turn — should not error
+        assert result.total_turns == 2
+
+
+class TestCoordinatorSessionName:
+    def test_session_name_passed_to_runner(self, db: DB) -> None:
+        """Runner should receive a session name containing agent_id and topic."""
+        channel_id = setup_channel(db, max_turns=2)
+
+        class CapturingRunner:
+            def __init__(self) -> None:
+                self.session_names: list[str | None] = []
+
+            def run(
+                self, prompt: str, model: str, json_schema: str, *, session_name: str | None = None
+            ) -> str:
+                self.session_names.append(session_name)
+                return make_response("hi")
+
+        runner = CapturingRunner()
+        coord = Coordinator(db, runner)
+        coord.run(channel_id)
+
+        assert len(runner.session_names) == 2
+        assert "proposer" in (runner.session_names[0] or "")
+        assert "challenger" in (runner.session_names[1] or "")
+        assert "Test topic" in (runner.session_names[0] or "")
 
 
 class TestCoordinatorErrors:
