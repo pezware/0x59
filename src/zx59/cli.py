@@ -76,6 +76,7 @@ def _build_parser() -> argparse.ArgumentParser:
     exp_p = sub.add_parser("export", help="Export artifact to file")
     exp_p.add_argument("channel_id", help="Channel ID")
     exp_p.add_argument("file", nargs="?", default=None, help="Output file path (any path accepted)")
+    exp_p.add_argument("--name", default=None, help="Artifact name to export (default: first)")
 
     # ls
     ls_p = sub.add_parser("ls", help="List channels")
@@ -197,7 +198,20 @@ def _cmd_export(args: argparse.Namespace, db: DB) -> int:
         print("No artifacts to export.", file=sys.stderr)
         return 1
 
-    art = artifacts[0]
+    if args.name:
+        matching = [a for a in artifacts if a.name == args.name]
+        if not matching:
+            names = ", ".join(a.name for a in artifacts)
+            print(f"No artifact named '{args.name}'. Available: {names}", file=sys.stderr)
+            return 1
+        art = matching[0]
+    else:
+        art = artifacts[0]
+        if len(artifacts) > 1:
+            names = ", ".join(a.name for a in artifacts)
+            print(f"Multiple artifacts available: {names}", file=sys.stderr)
+            print(f"Exporting '{art.name}'. Use --name to select.", file=sys.stderr)
+
     if args.file:
         path = Path(args.file)
     else:

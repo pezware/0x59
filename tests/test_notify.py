@@ -50,6 +50,18 @@ class TestNotify:
             assert args[1] == "Title"
             assert args[2] == "&lt;b&gt;bold&lt;/b&gt; &amp; &#x27;quoted&#x27;"
 
+    def test_newlines_replaced_on_macos(self) -> None:
+        """Multi-line messages must not break AppleScript string literals."""
+        with (
+            patch("zx59.notify.platform.system", return_value="Darwin"),
+            patch("zx59.notify.subprocess.run") as mock_run,
+        ):
+            notify("Title", "line one\nline two\r\nline three")
+            script = mock_run.call_args[0][0][2]
+            assert "\n" not in script.split("display notification")[1]
+            assert "\r" not in script
+            assert "line one line two line three" in script
+
     def test_failure_message_includes_exception(self, capsys: object) -> None:
         """Error details should be surfaced, not swallowed."""
         from io import StringIO

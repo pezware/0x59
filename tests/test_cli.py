@@ -96,6 +96,45 @@ class TestCLIReadCommands:
         result = main(["--db", str(db_path), "artifacts", cid])
         assert result == 0
 
+    def test_export_warns_multiple_artifacts(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        db_path = tmp_path / "test.db"
+        db = DB(db_path)
+        cid = db.create_channel(topic="Test", model="sonnet")
+        db.save_artifact(cid, "first.md", "content one")
+        db.save_artifact(cid, "second.md", "content two")
+        db.close()
+
+        result = main(["--db", str(db_path), "export", cid, str(tmp_path / "out.md")])
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "Multiple artifacts" in captured.err
+        assert "--name" in captured.err
+
+    def test_export_name_selects_artifact(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "test.db"
+        db = DB(db_path)
+        cid = db.create_channel(topic="Test", model="sonnet")
+        db.save_artifact(cid, "first.md", "content one")
+        db.save_artifact(cid, "second.md", "content two")
+        db.close()
+
+        out = tmp_path / "out.md"
+        result = main(["--db", str(db_path), "export", cid, str(out), "--name", "second.md"])
+        assert result == 0
+        assert out.read_text(encoding="utf-8") == "content two"
+
+    def test_export_name_not_found(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "test.db"
+        db = DB(db_path)
+        cid = db.create_channel(topic="Test", model="sonnet")
+        db.save_artifact(cid, "first.md", "content one")
+        db.close()
+
+        result = main(["--db", str(db_path), "export", cid, "--name", "nope.md"])
+        assert result == 1
+
     def test_export_rejects_traversal_in_artifact_name(self, tmp_path: Path) -> None:
         db_path = tmp_path / "test.db"
         db = DB(db_path)

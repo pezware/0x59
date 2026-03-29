@@ -12,8 +12,15 @@ def notify(title: str, message: str) -> None:
     """Send a desktop notification. Never raises."""
     try:
         if platform.system() == "Darwin":
-            safe_message = message.replace("\\", "\\\\").replace('"', '\\"')
-            safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
+            safe_message = (
+                message.replace("\\", "\\\\")
+                .replace('"', '\\"')
+                .replace("\n", " ")
+                .replace("\r", "")
+            )
+            safe_title = (
+                title.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", "")
+            )
             subprocess.run(
                 [
                     "osascript",

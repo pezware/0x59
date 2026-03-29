@@ -9,8 +9,8 @@ from typing import Protocol
 
 from zx59.context import estimate_tokens, window_messages
 from zx59.db import DB
+from zx59.errors import ClaudeResponseError
 from zx59.prompt import build_prompt
-from zx59.runner import ClaudeResponseError
 from zx59.schema import schema_json
 
 
