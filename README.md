@@ -128,7 +128,7 @@ uv run mypy src                      # type check
 uv run 0x59 --help                   # run locally
 ```
 
-See [CLAUDE.md](CLAUDE.md) for contributor guidelines and [docs/specs.md](docs/specs.md) for the full specification.
+See [docs/](docs/) for detailed documentation: [install](docs/INSTALL.md), [usage](docs/USAGE.md), [development](docs/DEVELOPMENT.md), and [full specification](docs/specs.md).
 
 ## License
 
