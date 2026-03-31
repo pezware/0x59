@@ -51,6 +51,27 @@ Write the failing test before the implementation. Use `FakeClaude` for coordinat
 - Commit messages explain "why", not "what"
 - No TODOs without issue numbers
 
+## Verification
+
+| Task type | Done when |
+|-----------|-----------|
+| Bug fix | Test reproducing the bug + full suite green + lint + types |
+| New feature | New tests + coverage ≥80% + full suite green + lint + types |
+| Refactor | All existing tests pass + lint + types |
+
+```bash
+uv run pytest && uv run ruff check src tests && uv run mypy src
+```
+
+## Compact Instructions
+
+When compressing, preserve in priority order:
+
+1. Critical Rules 1–5 (NEVER summarize)
+2. Architecture diagram and constraints
+3. Modified files and verification status
+4. Open TODOs and rollback notes
+
 ## Gotchas
 
 ### AppleScript String Escaping (notify.py)
